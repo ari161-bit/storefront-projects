@@ -1,13 +1,17 @@
 {
-  "name": "velvet-co-ecommerce",
+  "name": "lumera-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Velvet Co. — press-on nails storefront with checkout, payment method selection, and order tracking.",
+  "description": "LUMÉRA — luxury candle storefront API (Express + Supabase). Frontend lives in lumera-web/.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "@supabase/supabase-js": "^2.112.4",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0"
   }
 }

@@ -2,6 +2,8 @@ node_modules/
 data/
 *.log
 .claude/scheduled_tasks.lock
+.env
+.vercel/
 
 # Next.js (nexora-hero)
 .next/
