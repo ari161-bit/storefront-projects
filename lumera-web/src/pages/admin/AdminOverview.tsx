@@ -54,7 +54,7 @@ export default function AdminOverview() {
               <CartesianGrid strokeDasharray="3 3" stroke="#EAE0CC" />
               <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 11, fill: '#3D2B1F99' }} />
               <YAxis tick={{ fontSize: 11, fill: '#3D2B1F99' }} width={40} />
-              <Tooltip formatter={(v: number) => fmtGBP(v)} labelFormatter={(d) => fmtDate(d)} />
+              <Tooltip formatter={(value) => fmtGBP(Number(value))} labelFormatter={(label) => fmtDate(String(label))} />
               <Area type="monotone" dataKey="sales" stroke="#B08D4F" fill="url(#salesGrad)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -73,7 +73,7 @@ export default function AdminOverview() {
               <CartesianGrid strokeDasharray="3 3" stroke="#EAE0CC" />
               <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 11, fill: '#3D2B1F99' }} />
               <YAxis tick={{ fontSize: 11, fill: '#3D2B1F99' }} width={30} allowDecimals={false} />
-              <Tooltip labelFormatter={(d) => fmtDate(d)} />
+              <Tooltip labelFormatter={(label) => fmtDate(String(label))} />
               <Area type="monotone" dataKey="orders" stroke="#3D2B1F" fill="url(#ordersGrad)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>

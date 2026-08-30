@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api, { apiErrorMessage } from '../api/client';
@@ -30,7 +30,6 @@ type PaymentMethod = 'card' | 'paypal' | 'cod';
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
