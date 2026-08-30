@@ -1,0 +1,13 @@
+{
+  "name": "velvet-co-ecommerce",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Velvet Co. — press-on nails storefront with checkout, payment method selection, and order tracking.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

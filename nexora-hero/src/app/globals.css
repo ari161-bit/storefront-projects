@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --nexora-deep-teal: #081a1c;
+  --nexora-dark-surface: #102629;
+  --nexora-coral: #ff6b4a;
+  --nexora-mint: #62d8c4;
+  --nexora-yellow: #f4c95d;
+  --nexora-ivory: #f5f1e8;
+  --nexora-muted: #9eb5b3;
+
+  --background: var(--nexora-deep-teal);
+  --foreground: var(--nexora-ivory);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
