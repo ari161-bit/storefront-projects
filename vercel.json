@@ -1,11 +1,10 @@
 {
   "version": 2,
   "builds": [
-    { "src": "server.js", "use": "@vercel/node" },
-    { "src": "lumera-web/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
+    { "src": "lumera-web/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } },
+    { "src": "server.js", "use": "@vercel/node", "config": { "includeFiles": "lumera-web/dist/**" } }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "server.js" },
-    { "src": "/(.*)", "dest": "/lumera-web/dist/$1" }
+    { "src": "/(.*)", "dest": "server.js" }
   ]
 }
