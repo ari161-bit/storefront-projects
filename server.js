@@ -377,6 +377,244 @@ app.post('/api/newsletter', (req, res) => {
   res.status(already ? 200 : 201).json({ code: 'WELCOME10', alreadySubscribed: already });
 });
 
+/* =========================================================
+   PAN AROMA — admin auth & product management
+========================================================= */
+const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
+const CANDLE_PRODUCTS_FILE = path.join(DATA_DIR, 'candle-products.json');
+
+const DEFAULT_ADMIN_USERNAME = 'admin';
+const DEFAULT_ADMIN_PASSWORD = 'ChangeMe123!';
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return { salt, hash };
+}
+function verifyPassword(password, salt, hash) {
+  const check = crypto.scryptSync(password, salt, 64).toString('hex');
+  const checkBuf = Buffer.from(check, 'hex');
+  const hashBuf = Buffer.from(hash, 'hex');
+  if (checkBuf.length !== hashBuf.length) return false;
+  return crypto.timingSafeEqual(checkBuf, hashBuf);
+}
+
+function loadAdmin() {
+  try { return JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')); } catch (e) { return null; }
+}
+function saveAdmin(data) {
+  fs.writeFileSync(ADMIN_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+if (!fs.existsSync(ADMIN_FILE)) {
+  const { salt, hash } = hashPassword(DEFAULT_ADMIN_PASSWORD);
+  saveAdmin({ username: DEFAULT_ADMIN_USERNAME, salt, hash });
+  console.log('─'.repeat(60));
+  console.log('Pan Aroma admin account created.');
+  console.log(`  Username: ${DEFAULT_ADMIN_USERNAME}`);
+  console.log(`  Password: ${DEFAULT_ADMIN_PASSWORD}`);
+  console.log('  Log in at /admin.html and change this password immediately.');
+  console.log('─'.repeat(60));
+}
+
+const DEFAULT_CANDLE_PRODUCTS = [
+  { id: 'honeysuckle-sandalwood', name: 'Honeysuckle & Sandalwood', category: 'candle', categoryLabel: 'Candle', moods: ['floral', 'fruity'], price: 14.99, burn: 'Approx 23hr burn', notes: { top: 'Honeysuckle Nectar', mid: 'Rose Petal', base: 'Sandalwood' }, blurb: 'A fruity-floral hand-poured candle in a matte ceramic jar.', color: '#5B6B3F', stock: 14 },
+  { id: 'vanilla-bean', name: 'Vanilla Bean', category: 'candle', categoryLabel: 'Candle', moods: ['cozy'], price: 8.99, burn: 'Approx 21hr burn', notes: { top: 'Vanilla Orchid', mid: 'Warm Caramel', base: 'Tonka Bean' }, blurb: 'A timeless glass apothecary jar candle with a warm, sweet glow.', color: '#C7A34B', stock: 22 },
+  { id: 'pure-jasmine', name: 'Pure Jasmine', category: 'diffuser', categoryLabel: 'Reed Diffuser', moods: ['floral', 'calming'], price: 11.99, burn: 'Lasts up to 8 weeks', notes: { top: 'Jasmine Petals', mid: 'White Musk', base: 'Soft Woods' }, blurb: 'A calming, soothing reed diffuser to gently scent any room.', color: '#8D82B5', stock: 9 },
+  { id: 'apple-cinnamon', name: 'Apple & Cinnamon', category: 'diffuser', categoryLabel: 'Reed Diffuser', moods: ['spicy', 'cozy'], price: 11.99, burn: 'Lasts up to 8 weeks', notes: { top: 'Crisp Apple', mid: 'Cinnamon Bark', base: 'Warm Spice' }, blurb: 'A sweet and spicy reed diffuser, cosy from the very first sniff.', color: '#7C2B27', stock: 17 },
+  { id: 'lemongrass', name: 'Lemongrass', category: 'diffuser', categoryLabel: 'Reed Diffuser', moods: ['fresh', 'fruity'], price: 11.99, burn: 'Lasts up to 8 weeks', notes: { top: 'Lemongrass', mid: 'Lime Zest', base: 'Green Tea' }, blurb: 'A fresh, vibrant reed diffuser that wakes up any space.', color: '#D9B23C', stock: 20 },
+  { id: 'fluffy-towels-tealights', name: 'Fluffy Towels Tea Lights (16pk)', category: 'tealight', categoryLabel: 'Tea Lights', moods: ['fresh', 'calming'], price: 5.99, burn: 'Approx 4hr burn per light', notes: { top: 'Cotton Blossom', mid: 'Clean Linen', base: 'Soft Musk' }, blurb: '16 long-burning tea lights in a clean, fresh linen scent.', color: '#6E85A8', stock: 30 },
+];
+if (!fs.existsSync(CANDLE_PRODUCTS_FILE)) {
+  saveJson(CANDLE_PRODUCTS_FILE, DEFAULT_CANDLE_PRODUCTS);
+}
+
+const CATEGORY_LABELS = { candle: 'Candle', diffuser: 'Reed Diffuser', tealight: 'Tea Lights' };
+const VALID_MOODS = new Set(['floral', 'fruity', 'fresh', 'spicy', 'cozy', 'calming']);
+
+function slugify(s) {
+  return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60) || 'product';
+}
+
+/* --- sessions --- */
+const adminSessions = new Map();
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+function createSession(username) {
+  const token = crypto.randomBytes(24).toString('hex');
+  adminSessions.set(token, { username, expiresAt: Date.now() + SESSION_TTL_MS });
+  return token;
+}
+function getSession(token) {
+  if (!token) return null;
+  const s = adminSessions.get(token);
+  if (!s) return null;
+  if (Date.now() > s.expiresAt) { adminSessions.delete(token); return null; }
+  return s;
+}
+function parseCookies(req) {
+  const header = req.headers.cookie;
+  const cookies = {};
+  if (!header) return cookies;
+  header.split(';').forEach((pair) => {
+    const idx = pair.indexOf('=');
+    if (idx === -1) return;
+    const k = pair.slice(0, idx).trim();
+    const v = pair.slice(idx + 1).trim();
+    try { cookies[k] = decodeURIComponent(v); } catch (e) { cookies[k] = v; }
+  });
+  return cookies;
+}
+function requireAdmin(req, res, next) {
+  const cookies = parseCookies(req);
+  const session = getSession(cookies['pa_admin_session']);
+  if (!session) return res.status(401).json({ error: 'Not authenticated.' });
+  req.adminUsername = session.username;
+  next();
+}
+
+/* --- auth routes --- */
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
+
+  const admin = loadAdmin();
+  if (!admin || username !== admin.username || !verifyPassword(password, admin.salt, admin.hash)) {
+    return res.status(401).json({ error: 'Invalid username or password.' });
+  }
+
+  const token = createSession(admin.username);
+  res.cookie('pa_admin_session', token, { httpOnly: true, sameSite: 'lax', maxAge: SESSION_TTL_MS, path: '/' });
+  res.json({ ok: true, username: admin.username });
+});
+
+app.post('/api/admin/logout', (req, res) => {
+  const cookies = parseCookies(req);
+  const token = cookies['pa_admin_session'];
+  if (token) adminSessions.delete(token);
+  res.clearCookie('pa_admin_session', { path: '/' });
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/me', (req, res) => {
+  const cookies = parseCookies(req);
+  const session = getSession(cookies['pa_admin_session']);
+  if (!session) return res.status(401).json({ error: 'Not authenticated.' });
+  res.json({ username: session.username });
+});
+
+app.post('/api/admin/change-password', requireAdmin, (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  const admin = loadAdmin();
+  if (!currentPassword || !admin || !verifyPassword(currentPassword, admin.salt, admin.hash)) {
+    return res.status(401).json({ error: 'Current password is incorrect.' });
+  }
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+  }
+  const { salt, hash } = hashPassword(newPassword);
+  admin.salt = salt;
+  admin.hash = hash;
+  saveAdmin(admin);
+  res.json({ ok: true });
+});
+
+/* --- product catalog: public read, admin write --- */
+app.get('/api/candle-products', (req, res) => {
+  res.json(loadJson(CANDLE_PRODUCTS_FILE));
+});
+
+function validateProductPayload(body, existingProducts, currentId) {
+  const name = sanitizeStr(body.name, 120);
+  const category = sanitizeStr(body.category, 20);
+  const blurb = sanitizeStr(body.blurb, 300);
+  const burn = sanitizeStr(body.burn, 120);
+  const color = /^#[0-9A-Fa-f]{6}$/.test(body.color) ? body.color : '#B8692A';
+  const price = Number(body.price);
+  const stock = Math.round(Number(body.stock));
+  const notes = body.notes || {};
+  const top = sanitizeStr(notes.top, 80);
+  const mid = sanitizeStr(notes.mid, 80);
+  const base = sanitizeStr(notes.base, 80);
+  const moods = Array.isArray(body.moods) ? body.moods.filter((m) => VALID_MOODS.has(m)) : [];
+
+  if (!name || !blurb || !burn || !top || !mid || !base) {
+    return { error: 'Please fill in name, blurb, usage info and all three scent notes.' };
+  }
+  if (!CATEGORY_LABELS[category]) {
+    return { error: 'Invalid category.' };
+  }
+  if (!Number.isFinite(price) || price <= 0) {
+    return { error: 'Price must be a positive number.' };
+  }
+  if (!Number.isFinite(stock) || stock < 0) {
+    return { error: 'Stock must be a non-negative number.' };
+  }
+  if (moods.length === 0) {
+    return { error: 'Select at least one mood.' };
+  }
+
+  let id = currentId;
+  if (!id) {
+    const base_id = slugify(name);
+    id = base_id;
+    let i = 2;
+    while (existingProducts.some((p) => p.id === id)) {
+      id = `${base_id}-${i}`;
+      i++;
+    }
+  }
+
+  return {
+    product: {
+      id,
+      name,
+      category,
+      categoryLabel: CATEGORY_LABELS[category],
+      moods,
+      price: Math.round(price * 100) / 100,
+      burn,
+      notes: { top, mid, base },
+      blurb,
+      color,
+      stock,
+    },
+  };
+}
+
+app.post('/api/admin/candle-products', requireAdmin, (req, res) => {
+  const products = loadJson(CANDLE_PRODUCTS_FILE);
+  const { error, product } = validateProductPayload(req.body || {}, products, null);
+  if (error) return res.status(400).json({ error });
+
+  products.push(product);
+  saveJson(CANDLE_PRODUCTS_FILE, products);
+  res.status(201).json(product);
+});
+
+app.put('/api/admin/candle-products/:id', requireAdmin, (req, res) => {
+  const products = loadJson(CANDLE_PRODUCTS_FILE);
+  const idx = products.findIndex((p) => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Product not found.' });
+
+  const { error, product } = validateProductPayload(req.body || {}, products, req.params.id);
+  if (error) return res.status(400).json({ error });
+
+  products[idx] = product;
+  saveJson(CANDLE_PRODUCTS_FILE, products);
+  res.json(product);
+});
+
+app.delete('/api/admin/candle-products/:id', requireAdmin, (req, res) => {
+  const products = loadJson(CANDLE_PRODUCTS_FILE);
+  const idx = products.findIndex((p) => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Product not found.' });
+
+  products.splice(idx, 1);
+  saveJson(CANDLE_PRODUCTS_FILE, products);
+  res.json({ ok: true });
+});
+
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'index.html'));
 });

@@ -426,6 +426,7 @@
       <div class="flex items-center gap-5">
         <a href="https://instagram.com" target="_blank" rel="noopener" class="nav-link text-ink/60 dark:text-cream/60 hover:text-ink dark:hover:text-cream text-xs uppercase tracking-wide">Instagram</a>
         <button onclick="openTrackOrder()" class="nav-link text-ink/60 dark:text-cream/60 hover:text-ink dark:hover:text-cream text-xs uppercase tracking-wide">Track Order</button>
+        <a href="./admin.html" class="nav-link text-ink/30 dark:text-cream/30 hover:text-ink dark:hover:text-cream text-xs uppercase tracking-wide">Admin</a>
       </div>
     </div>
   </footer>
@@ -743,14 +744,15 @@
   /* =========================================================
      PRODUCTS
   ========================================================= */
-  const PRODUCTS = [
-    { id: 'honeysuckle-sandalwood', name: 'Honeysuckle & Sandalwood', category: 'candle', categoryLabel: 'Candle', moods: ['floral', 'fruity'], price: 14.99, burn: 'Approx 23hr burn', notes: { top: 'Honeysuckle Nectar', mid: 'Rose Petal', base: 'Sandalwood' }, blurb: 'A fruity-floral hand-poured candle in a matte ceramic jar.', color: '#5B6B3F', stock: 14 },
-    { id: 'vanilla-bean', name: 'Vanilla Bean', category: 'candle', categoryLabel: 'Candle', moods: ['cozy'], price: 8.99, burn: 'Approx 21hr burn', notes: { top: 'Vanilla Orchid', mid: 'Warm Caramel', base: 'Tonka Bean' }, blurb: 'A timeless glass apothecary jar candle with a warm, sweet glow.', color: '#C7A34B', stock: 22 },
-    { id: 'pure-jasmine', name: 'Pure Jasmine', category: 'diffuser', categoryLabel: 'Reed Diffuser', moods: ['floral', 'calming'], price: 11.99, burn: 'Lasts up to 8 weeks', notes: { top: 'Jasmine Petals', mid: 'White Musk', base: 'Soft Woods' }, blurb: 'A calming, soothing reed diffuser to gently scent any room.', color: '#8D82B5', stock: 9 },
-    { id: 'apple-cinnamon', name: 'Apple & Cinnamon', category: 'diffuser', categoryLabel: 'Reed Diffuser', moods: ['spicy', 'cozy'], price: 11.99, burn: 'Lasts up to 8 weeks', notes: { top: 'Crisp Apple', mid: 'Cinnamon Bark', base: 'Warm Spice' }, blurb: 'A sweet and spicy reed diffuser, cosy from the very first sniff.', color: '#7C2B27', stock: 17 },
-    { id: 'lemongrass', name: 'Lemongrass', category: 'diffuser', categoryLabel: 'Reed Diffuser', moods: ['fresh', 'fruity'], price: 11.99, burn: 'Lasts up to 8 weeks', notes: { top: 'Lemongrass', mid: 'Lime Zest', base: 'Green Tea' }, blurb: 'A fresh, vibrant reed diffuser that wakes up any space.', color: '#D9B23C', stock: 20 },
-    { id: 'fluffy-towels-tealights', name: 'Fluffy Towels Tea Lights (16pk)', category: 'tealight', categoryLabel: 'Tea Lights', moods: ['fresh', 'calming'], price: 5.99, burn: 'Approx 4hr burn per light', notes: { top: 'Cotton Blossom', mid: 'Clean Linen', base: 'Soft Musk' }, blurb: '16 long-burning tea lights in a clean, fresh linen scent.', color: '#6E85A8', stock: 30 },
-  ];
+  let PRODUCTS = [];
+  async function loadProducts() {
+    try {
+      const res = await fetch('/api/candle-products');
+      PRODUCTS = await res.json();
+    } catch (e) {
+      PRODUCTS = [];
+    }
+  }
 
   const MOODS = [
     { id: 'floral', label: 'Floral' },
@@ -1802,19 +1804,23 @@
   /* =========================================================
      INIT
   ========================================================= */
-  loadWishlist();
-  loadCart();
-  renderFilters();
-  renderProducts();
-  renderBundleGrid();
-  updateBundleFooter();
-  renderFaq();
-  renderReviewStarInput();
-  updateWishlistUI();
-  updateCartUI();
-  loadAllReviews();
-  initScrollReveal();
-  maybeShowNewsletterPopup();
+  async function init() {
+    loadWishlist();
+    loadCart();
+    await loadProducts();
+    renderFilters();
+    renderProducts();
+    renderBundleGrid();
+    updateBundleFooter();
+    renderFaq();
+    renderReviewStarInput();
+    updateWishlistUI();
+    updateCartUI();
+    loadAllReviews();
+    initScrollReveal();
+    maybeShowNewsletterPopup();
+  }
+  init();
 </script>
 
 </body>

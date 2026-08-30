@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pan Aroma | Admin</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23211A14'/%3E%3Cpath d='M50 20c8 14-10 18-10 32a10 10 0 0 0 20 0c0-10-6-14-2-22 4 6 10 12 10 22a18 18 0 0 1-36 0c0-20 12-22 18-32Z' fill='%23F4C77B'/%3E%3C/svg%3E" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#211A14', ink2: '#2C231B', cream: '#FBF6EC', linen: '#F1E8D8',
+          amber: '#D98A3D', amberDark: '#B8692A', ember: '#8C3B2B', sage: '#7C8A64', glow: '#F4C77B',
+        },
+        fontFamily: { serif: ['"Fraunces"', 'serif'], sans: ['"Inter"', 'sans-serif'] },
+      }
+    }
+  }
+</script>
+<style>
+  body { background-color: #F1E8D8; color: #211A14; }
+  .btn { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .mood-check.active { background-color: #211A14; color: #FBF6EC; border-color: #211A14; }
+  .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: spin 0.7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="font-sans antialiased min-h-screen">
+
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-24 opacity-0 z-[100] bg-ink text-cream px-6 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300"></div>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="login-screen" class="hidden min-h-screen flex items-center justify-center px-5">
+  <div class="w-full max-w-sm bg-cream border border-ink/10 rounded-2xl shadow-xl p-8">
+    <div class="flex items-center gap-2 mb-6">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3c2 3.4-2.4 4.4-2.4 7.8a2.4 2.4 0 0 0 4.8 0c0-2.4-1.5-3.4-.5-5.4 1 1.5 2.5 2.9 2.5 5.4a4.4 4.4 0 0 1-8.8 0C7.6 6.1 10.1 5.5 12 3Z" fill="#D98A3D"/></svg>
+      <span class="font-serif text-lg tracking-[0.14em]">PAN AROMA ADMIN</span>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Username</label>
+        <input id="login-username" type="text" autocomplete="username" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="admin">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="••••••••">
+      </div>
+    </div>
+    <p id="login-error" class="hidden text-xs text-red-600 mt-3"></p>
+    <button id="login-btn" onclick="doLogin()" class="btn w-full mt-6 px-6 py-3 rounded-full bg-ink text-cream text-sm uppercase tracking-wide hover:bg-amberDark inline-flex items-center justify-center gap-2">
+      <span id="login-btn-label">Log In</span>
+    </button>
+    <p class="text-[11px] text-ink/40 mt-4 leading-relaxed">First time here? The server console printed a default username/password when it started — log in with that and change it below once you're in.</p>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dashboard" class="hidden max-w-5xl mx-auto px-5 md:px-8 py-10">
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center gap-2">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3c2 3.4-2.4 4.4-2.4 7.8a2.4 2.4 0 0 0 4.8 0c0-2.4-1.5-3.4-.5-5.4 1 1.5 2.5 2.9 2.5 5.4a4.4 4.4 0 0 1-8.8 0C7.6 6.1 10.1 5.5 12 3Z" fill="#D98A3D"/></svg>
+      <span class="font-serif text-lg tracking-[0.14em]">PAN AROMA ADMIN</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="./candles.html" class="text-xs uppercase tracking-wide text-ink/60 hover:text-ink">View Store</a>
+      <button onclick="doLogout()" class="text-xs uppercase tracking-wide text-ink/60 hover:text-ink">Log Out (<span id="me-username"></span>)</button>
+    </div>
+  </div>
+
+  <!-- Add / Edit product -->
+  <div class="bg-cream border border-ink/10 rounded-2xl p-6 mb-8">
+    <div class="flex items-center justify-between mb-5">
+      <h2 id="form-title" class="font-serif text-xl">Add a Product</h2>
+      <button id="cancel-edit-btn" onclick="resetForm()" class="hidden text-xs uppercase tracking-wide text-ink/50 hover:text-ink">Cancel Edit</button>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Product Name *</label>
+        <input id="f-name" type="text" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="e.g. Fig & Cedarwood">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Category *</label>
+        <select id="f-category" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber">
+          <option value="candle">Candle</option>
+          <option value="diffuser">Reed Diffuser</option>
+          <option value="tealight">Tea Lights</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Price (£) *</label>
+        <input id="f-price" type="number" step="0.01" min="0.01" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="12.99">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Stock *</label>
+        <input id="f-stock" type="number" step="1" min="0" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="20">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Burn / Usage Info *</label>
+        <input id="f-burn" type="text" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="Approx 22hr burn">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Accent Colour</label>
+        <input id="f-color" type="color" value="#B8692A" class="w-full h-[38px] border border-ink/20 rounded cursor-pointer">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Short Description *</label>
+        <input id="f-blurb" type="text" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="A warm, woody candle for cosy evenings.">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Top Note *</label>
+        <input id="f-note-top" type="text" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="Fig Leaf">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Mid Note *</label>
+        <input id="f-note-mid" type="text" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="Fig Fruit">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Base Note *</label>
+        <input id="f-note-base" type="text" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber" placeholder="Cedarwood">
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <label class="text-[11px] uppercase tracking-wide text-ink/50 block mb-1.5">Moods (select at least one) *</label>
+      <div id="f-moods" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <p id="form-error" class="hidden text-xs text-red-600 mt-4"></p>
+    <button id="submit-product-btn" onclick="submitProduct()" class="btn mt-5 px-7 py-3 rounded-full bg-ink text-cream text-sm uppercase tracking-wide hover:bg-amberDark inline-flex items-center gap-2">
+      <span id="submit-product-label">Add Product</span>
+    </button>
+  </div>
+
+  <!-- Product list -->
+  <div class="bg-cream border border-ink/10 rounded-2xl p-6 mb-8">
+    <h2 class="font-serif text-xl mb-5">Products (<span id="product-count">0</span>)</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-[11px] uppercase tracking-wide text-ink/50 border-b border-ink/10">
+            <th class="pb-3 pr-4">Product</th>
+            <th class="pb-3 pr-4">Category</th>
+            <th class="pb-3 pr-4">Price</th>
+            <th class="pb-3 pr-4">Stock</th>
+            <th class="pb-3 pr-4">Moods</th>
+            <th class="pb-3"></th>
+          </tr>
+        </thead>
+        <tbody id="product-table-body" class="divide-y divide-ink/10"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Change password -->
+  <div class="bg-cream border border-ink/10 rounded-2xl p-6">
+    <h2 class="font-serif text-xl mb-5">Change Password</h2>
+    <div class="grid sm:grid-cols-3 gap-4">
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Current Password</label>
+        <input id="pw-current" type="password" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">New Password</label>
+        <input id="pw-new" type="password" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber">
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wide text-ink/50">Confirm New Password</label>
+        <input id="pw-confirm" type="password" class="w-full border-b border-ink/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-amber">
+      </div>
+    </div>
+    <p id="pw-error" class="hidden text-xs text-red-600 mt-3"></p>
+    <p id="pw-success" class="hidden text-xs text-sage mt-3"></p>
+    <button onclick="changePassword()" class="btn mt-5 px-7 py-3 rounded-full border border-ink/25 text-ink text-sm uppercase tracking-wide hover:border-amber">Update Password</button>
+  </div>
+</div>
+
+<script>
+  const MOODS = ['floral', 'fruity', 'fresh', 'spicy', 'cozy', 'calming'];
+  let selectedMoods = new Set();
+  let editingId = null;
+  let products = [];
+
+  function showToast(text, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = text;
+    t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300 ' + (isError ? 'bg-red-600 text-white' : 'bg-ink text-cream');
+    requestAnimationFrame(() => t.classList.remove('translate-y-24', 'opacity-0'));
+    setTimeout(() => t.classList.add('translate-y-24', 'opacity-0'), 2400);
+  }
+
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/admin/me', { credentials: 'same-origin' });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      document.getElementById('me-username').textContent = data.username;
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadProducts();
+    } catch (e) {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+    const label = document.getElementById('login-btn-label');
+
+    if (!username || !password) {
+      errEl.textContent = 'Please enter a username and password.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    btn.disabled = true;
+    label.innerHTML = '<span class="spinner"></span>';
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed.');
+      errEl.classList.add('hidden');
+      document.getElementById('login-password').value = '';
+      checkAuth();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      label.textContent = 'Log In';
+    }
+  }
+
+  async function doLogout() {
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    checkAuth();
+  }
+
+  function renderMoodPicker() {
+    document.getElementById('f-moods').innerHTML = MOODS.map(m => `
+      <button type="button" class="mood-check btn px-3.5 py-1.5 rounded-full border border-ink/20 text-xs uppercase tracking-wide ${selectedMoods.has(m) ? 'active' : ''}" onclick="toggleMood('${m}')">${m}</button>
+    `).join('');
+  }
+  function toggleMood(m) {
+    if (selectedMoods.has(m)) selectedMoods.delete(m); else selectedMoods.add(m);
+    renderMoodPicker();
+  }
+
+  async function loadProducts() {
+    const res = await fetch('/api/candle-products', { credentials: 'same-origin' });
+    products = await res.json();
+    renderProductTable();
+  }
+
+  function renderProductTable() {
+    document.getElementById('product-count').textContent = products.length;
+    document.getElementById('product-table-body').innerHTML = products.map(p => `
+      <tr>
+        <td class="py-3 pr-4">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background:${p.color}"></span>
+            <span class="font-medium">${p.name}</span>
+          </div>
+        </td>
+        <td class="py-3 pr-4 text-ink/60">${p.categoryLabel}</td>
+        <td class="py-3 pr-4">£${Number(p.price).toFixed(2)}</td>
+        <td class="py-3 pr-4 ${p.stock <= 10 ? 'text-ember font-medium' : 'text-ink/60'}">${p.stock}</td>
+        <td class="py-3 pr-4 text-ink/50 text-xs">${p.moods.join(', ')}</td>
+        <td class="py-3 text-right whitespace-nowrap">
+          <button onclick="editProduct('${p.id}')" class="text-xs uppercase tracking-wide text-amberDark hover:underline mr-3">Edit</button>
+          <button onclick="deleteProduct('${p.id}')" class="text-xs uppercase tracking-wide text-red-600 hover:underline">Delete</button>
+        </td>
+      </tr>
+    `).join('') || `<tr><td colspan="6" class="py-8 text-center text-ink/40">No products yet — add your first one above.</td></tr>`;
+  }
+
+  function editProduct(id) {
+    const p = products.find(pr => pr.id === id);
+    if (!p) return;
+    editingId = id;
+    document.getElementById('f-name').value = p.name;
+    document.getElementById('f-category').value = p.category;
+    document.getElementById('f-price').value = p.price;
+    document.getElementById('f-stock').value = p.stock;
+    document.getElementById('f-burn').value = p.burn;
+    document.getElementById('f-color').value = p.color;
+    document.getElementById('f-blurb').value = p.blurb;
+    document.getElementById('f-note-top').value = p.notes.top;
+    document.getElementById('f-note-mid').value = p.notes.mid;
+    document.getElementById('f-note-base').value = p.notes.base;
+    selectedMoods = new Set(p.moods);
+    renderMoodPicker();
+
+    document.getElementById('form-title').textContent = `Edit "${p.name}"`;
+    document.getElementById('submit-product-label').textContent = 'Update Product';
+    document.getElementById('cancel-edit-btn').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    editingId = null;
+    ['f-name', 'f-price', 'f-stock', 'f-burn', 'f-blurb', 'f-note-top', 'f-note-mid', 'f-note-base'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-category').value = 'candle';
+    document.getElementById('f-color').value = '#B8692A';
+    selectedMoods = new Set();
+    renderMoodPicker();
+    document.getElementById('form-title').textContent = 'Add a Product';
+    document.getElementById('submit-product-label').textContent = 'Add Product';
+    document.getElementById('cancel-edit-btn').classList.add('hidden');
+    document.getElementById('form-error').classList.add('hidden');
+  }
+
+  async function submitProduct() {
+    const errEl = document.getElementById('form-error');
+    const payload = {
+      name: document.getElementById('f-name').value.trim(),
+      category: document.getElementById('f-category').value,
+      price: parseFloat(document.getElementById('f-price').value),
+      stock: parseInt(document.getElementById('f-stock').value, 10),
+      burn: document.getElementById('f-burn').value.trim(),
+      color: document.getElementById('f-color').value,
+      blurb: document.getElementById('f-blurb').value.trim(),
+      notes: {
+        top: document.getElementById('f-note-top').value.trim(),
+        mid: document.getElementById('f-note-mid').value.trim(),
+        base: document.getElementById('f-note-base').value.trim(),
+      },
+      moods: [...selectedMoods],
+    };
+
+    const btn = document.getElementById('submit-product-btn');
+    const label = document.getElementById('submit-product-label');
+    btn.disabled = true;
+    const originalLabel = label.textContent;
+    label.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      const url = editingId ? `/api/admin/candle-products/${encodeURIComponent(editingId)}` : '/api/admin/candle-products';
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save product.');
+
+      errEl.classList.add('hidden');
+      showToast(editingId ? 'Product updated' : 'Product added');
+      resetForm();
+      loadProducts();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      label.textContent = originalLabel;
+    }
+  }
+
+  async function deleteProduct(id) {
+    const p = products.find(pr => pr.id === id);
+    if (!p) return;
+    if (!confirm(`Delete "${p.name}"? This can't be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/candle-products/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'same-origin' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not delete product.');
+      showToast('Product deleted');
+      if (editingId === id) resetForm();
+      loadProducts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function changePassword() {
+    const current = document.getElementById('pw-current').value;
+    const next = document.getElementById('pw-new').value;
+    const confirmPw = document.getElementById('pw-confirm').value;
+    const errEl = document.getElementById('pw-error');
+    const okEl = document.getElementById('pw-success');
+    errEl.classList.add('hidden');
+    okEl.classList.add('hidden');
+
+    if (!current || !next) {
+      errEl.textContent = 'Please fill in both password fields.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (next !== confirmPw) {
+      errEl.textContent = 'New passwords do not match.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ currentPassword: current, newPassword: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not update password.');
+      okEl.textContent = 'Password updated.';
+      okEl.classList.remove('hidden');
+      document.getElementById('pw-current').value = '';
+      document.getElementById('pw-new').value = '';
+      document.getElementById('pw-confirm').value = '';
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('login-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+  renderMoodPicker();
+  checkAuth();
+</script>
+
+</body>
+</html>
