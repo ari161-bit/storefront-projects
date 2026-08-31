@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api, { apiErrorMessage } from '../api/client';
 import { fmtGBP } from '../utils/format';
+import type { Address } from '../types';
 
 const FREE_DELIVERY_THRESHOLD = 35;
 const DELIVERY_FEE = 3.95;
@@ -37,6 +38,31 @@ export default function Checkout() {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [postcode, setPostcode] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    setName((prev) => prev || user.name);
+    setEmail((prev) => prev || user.email);
+    api
+      .get<Address[]>('/addresses')
+      .then((res) => {
+        setSavedAddresses(res.data);
+        const preferred = res.data.find((a) => a.isDefault) || res.data[0];
+        if (preferred) applyAddress(preferred);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  function applyAddress(a: Address) {
+    setSelectedAddressId(a.id);
+    setPhone(a.phone);
+    setAddress(a.addressLine);
+    setCity(a.city);
+    setPostcode(a.postcode);
+  }
 
   const [method, setMethod] = useState<PaymentMethod>('card');
   const [cardName, setCardName] = useState('');
@@ -142,6 +168,23 @@ export default function Checkout() {
         <div className="space-y-10">
           <section>
             <h2 className="font-serif-display text-xl text-espressoDark mb-5">Delivery Details</h2>
+            {savedAddresses.length > 0 && (
+              <div className="mb-5">
+                <label className="text-[11px] uppercase tracking-wide text-espresso/50 block mb-1.5">Use a saved address</label>
+                <select
+                  value={selectedAddressId}
+                  onChange={(e) => {
+                    const found = savedAddresses.find((a) => a.id === e.target.value);
+                    if (found) applyAddress(found);
+                  }}
+                  className="w-full border border-espresso/20 rounded-lg px-3 py-2.5 text-sm bg-ivory focus:outline-none focus:border-champagneDark"
+                >
+                  {savedAddresses.map((a) => (
+                    <option key={a.id} value={a.id}>{a.label} — {a.addressLine}, {a.city}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name *" className="border-b border-espresso/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-champagneDark" />
               <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email *" type="email" className="border-b border-espresso/20 bg-transparent px-1 py-2.5 text-sm focus:outline-none focus:border-champagneDark" />

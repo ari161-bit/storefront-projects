@@ -3,11 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import type { Product, Review } from '../types';
 import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import StarRating from '../components/StarRating';
 import ProductCard from '../components/ProductCard';
+import WishlistHeartButton from '../components/WishlistHeartButton';
 import { fmtGBP, fmtDate } from '../utils/format';
 import { productImageSrc } from '../utils/image';
 import { useProducts } from '../hooks/useProducts';
@@ -19,7 +19,6 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addItem } = useCart();
-  const { has, toggle } = useWishlist();
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -168,15 +167,11 @@ export default function ProductDetail() {
               <span className="w-5 text-center">{qty}</span>
               <button onClick={() => setQty((q) => Math.min(product.stock || 99, q + 1))} className="w-8 h-8 flex items-center justify-center text-espressoDark">+</button>
             </div>
-            <button
-              onClick={() => toggle(product.id)}
+            <WishlistHeartButton
+              productId={product.id}
+              size={18}
               className="w-11 h-11 rounded-full border border-espresso/20 flex items-center justify-center shrink-0"
-              aria-label="Toggle wishlist"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill={has(product.id) ? '#B0473A' : 'none'} stroke={has(product.id) ? '#B0473A' : '#3D2B1F'} strokeWidth="1.8">
-                <path d="M12 20.2s-7.4-4.6-9.8-9A5.4 5.4 0 0 1 12 6.4 5.4 5.4 0 0 1 21.8 11.2c-2.4 4.4-9.8 9-9.8 9Z" />
-              </svg>
-            </button>
+            />
           </div>
 
           <div className="flex gap-3">

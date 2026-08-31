@@ -16,6 +16,22 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartBump, setCartBump] = useState(false);
+  const [wishlistBump, setWishlistBump] = useState(false);
+
+  useEffect(() => {
+    if (count === 0) return;
+    setCartBump(true);
+    const t = setTimeout(() => setCartBump(false), 320);
+    return () => clearTimeout(t);
+  }, [count]);
+
+  useEffect(() => {
+    if (ids.size === 0) return;
+    setWishlistBump(true);
+    const t = setTimeout(() => setWishlistBump(false), 320);
+    return () => clearTimeout(t);
+  }, [ids.size]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -50,7 +66,7 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-4 md:gap-5">
-          <Link to="/wishlist" className="relative text-espresso/70 hover:text-espressoDark" aria-label="Wishlist">
+          <Link to="/wishlist" className={`relative text-espresso/70 hover:text-espressoDark transition-transform duration-200 ${wishlistBump ? 'scale-125' : 'scale-100'}`} aria-label="Wishlist">
             <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M12 20.2s-7.4-4.6-9.8-9A5.4 5.4 0 0 1 12 6.4 5.4 5.4 0 0 1 21.8 11.2c-2.4 4.4-9.8 9-9.8 9Z" />
             </svg>
@@ -60,7 +76,7 @@ export default function Navbar() {
               </span>
             )}
           </Link>
-          <Link to="/cart" className="relative text-espresso/70 hover:text-espressoDark" aria-label="Cart">
+          <Link to="/cart" className={`relative text-espresso/70 hover:text-espressoDark transition-transform duration-200 ${cartBump ? 'scale-125' : 'scale-100'}`} aria-label="Cart">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M6 8h12l-1 12.5a1 1 0 0 1-1 .9H8a1 1 0 0 1-1-.9L6 8Z" />
               <path d="M9 8V6a3 3 0 0 1 6 0v2" />

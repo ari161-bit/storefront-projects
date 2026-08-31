@@ -1,15 +1,13 @@
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
 import StarRating from './StarRating';
+import WishlistHeartButton from './WishlistHeartButton';
 import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
 import { fmtGBP } from '../utils/format';
 import { productImageSrc } from '../utils/image';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
-  const { has, toggle } = useWishlist();
-  const inWishlist = has(product.id);
   const effectivePrice = product.salePrice ?? product.price;
 
   return (
@@ -39,25 +37,10 @@ export default function ProductCard({ product }: { product: Product }) {
             Only {product.stock} left
           </span>
         )}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            toggle(product.id);
-          }}
-          aria-label="Toggle wishlist"
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-ivory/90 flex items-center justify-center transition-transform active:scale-90"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill={inWishlist ? '#B0473A' : 'none'}
-            stroke={inWishlist ? '#B0473A' : '#3D2B1F'}
-            strokeWidth="1.8"
-          >
-            <path d="M12 20.2s-7.4-4.6-9.8-9A5.4 5.4 0 0 1 12 6.4 5.4 5.4 0 0 1 21.8 11.2c-2.4 4.4-9.8 9-9.8 9Z" />
-          </svg>
-        </button>
+        <WishlistHeartButton
+          productId={product.id}
+          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-ivory/90 flex items-center justify-center"
+        />
       </Link>
       <div className="p-5">
         <StarRating rating={product.rating} count={product.ratingCount} />
